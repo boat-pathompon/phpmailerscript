@@ -17,7 +17,7 @@
   define('REPLY_ADDRESS', '');
   define('REPLY_NAME'   , '');
 
-  // Get uploded file informations.
+    // Get uploded file informations.
   //   Return: Object with fileName, tmpName, extension, filesizeKB
   function getFileInfo($inputName) {
     $fileName   = basename($_FILES[$inputName]['name']);
@@ -71,7 +71,7 @@
     for ($i = 0 ; $i < sizeof($keys) - 1 ; $i++) {
       $name = $keys[$i];
       $value = empty($_POST[$name]) ? '-' : $_POST[$name];
-      $html .= '<b>' . $name . ' :</b><br />' . $value . '<br/>';
+      $html .= '<b>' . $name . ' :</b><br />' . $value . '<br/><br/>';
       $text .= $name . ':' . $value . '\n';
     }
 
@@ -97,26 +97,29 @@
     $errors = array();
 
     for ($i = 0 ; $i < sizeof($keys) ; $i++) {
-      $fileInfo      = getFileInfo($keys[$i]);
-      $validatedFile = validateFile($fileInfo);
+      $fileInfo = getFileInfo($keys[$i]);
 
-      if ($validatedFile->valid) {
-        array_push(
-          $files,
-          array(
-            $fileInfo->tmpName,
-            $fileInfo->fileName
-          )
-        );
-      }
-      else {
-        array_push(
-          $errors,
-          array(
-            $keys[$i],
-          $validatedFile->errors
-          )
-        );
+      if ($fileInfo->tmpName != "") {
+        $validatedFile = validateFile($fileInfo);
+
+        if ($validatedFile->valid) {
+          array_push(
+            $files,
+            array(
+              $fileInfo->tmpName,
+              $fileInfo->fileName
+            )
+          );
+        }
+        else {
+          array_push(
+            $errors,
+            array(
+              $keys[$i],
+            $validatedFile->errors
+            )
+          );
+        }
       }
     }
 
@@ -158,15 +161,15 @@
   $emailFiles = emailFiles();
 
   if (sizeof($emailFiles->errors) > 0) {
-    echo 'errors';
+    echo json_encode(array('result' => 'validationFailed'));
   }
   else {
     $emailBody = emailBody();
     $mail = initMail($emailBody, $emailFiles->files);
 
     if ($mail->send())
-      echo 'Mail was sent.';
+      echo json_encode(array('result' => 'success'));
     else
-      echo 'Mailer Error: ' . $mail->ErrorInfo;
+      echo json_encode(array('result' => 'error'));
   }
 ?>
